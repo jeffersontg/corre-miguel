@@ -28,6 +28,29 @@ O jogo fica em `https://<seu-usuario>.github.io/corre-miguel/`.
 
 No celular, abra o link no Chrome e toque em **⋮ → Adicionar à tela inicial** para instalar com ícone.
 
+## App Android (APK)
+
+O workflow `.github/workflows/android.yml` empacota o jogo com [Capacitor](https://capacitorjs.com/) a cada push na `main` e publica o `corre-miguel.apk` em **Releases**.
+
+- O APK funciona sem internet (three.js e fontes incluídos).
+- A voz do narrador usa o Text-to-Speech do Android (plugin `@capacitor-community/text-to-speech`).
+- O APK é assinado sempre com a mesma chave, guardada nos segredos do repositório
+  (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`).
+  Assim, cada versão nova instala por cima da anterior.
+
+Para instalar: baixe o APK da última release no celular, abra o arquivo e permita "instalar apps desconhecidos".
+
+Para gerar localmente (precisa de Android Studio / Android SDK e Java 17):
+
+```bash
+npm ci
+npm run build:web
+npx cap add android
+node scripts/patch-android.js 1
+npx cap sync android
+npx cap open android
+```
+
 ## Arquivos
 
 | Arquivo | O que é |
@@ -36,5 +59,9 @@ No celular, abra o link no Chrome e toque em **⋮ → Adicionar à tela inicial
 | `three.min.js` | three.js r128, incluído para não depender de CDN |
 | `manifest.webmanifest` | Nome, ícone e tela cheia ao instalar no celular |
 | `icons/` | Ícones do app |
+| `fonts/` | Fontes Baloo 2 e Nunito (SIL OFL) incluídas |
+| `capacitor.config.json`, `package.json` | Configuração do app Android |
+| `scripts/` | Monta a pasta `www/` e ajusta o projeto Android (ícone, tela cheia, retrato, versão) |
+| `android-res/` | Ícones e tela de abertura do app Android |
 
 > As fotos de referência dos personagens **não** fazem parte deste repositório.

@@ -1,0 +1,20 @@
+{
+  "name": "corre-miguel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Corre, Miguel! — jogo de corrida no navegador e app Android (Capacitor)",
+  "scripts": {
+    "build:web": "node scripts/build-web.js",
+    "android": "npm run build:web && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor-community/text-to-speech": "4.1.1",
+    "@capacitor/android": "6.2.1",
+    "@capacitor/core": "6.2.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "6.2.1",
+    "@fontsource/baloo-2": "5.2.5",
+    "@fontsource/nunito": "5.2.5"
+  }
+}

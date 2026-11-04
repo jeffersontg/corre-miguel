@@ -1,0 +1,8 @@
+{
+  "appId": "io.github.jeffersontg.corremiguel",
+  "appName": "Corre, Miguel!",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#1b2a4a"
+  }
+}

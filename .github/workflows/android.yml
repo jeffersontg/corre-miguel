@@ -1,0 +1,80 @@
+# Gera o APK do Corre, Miguel! a cada push na main e publica em Releases.
+name: APK Android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Montar projeto Android
+        run: |
+          npm run build:web
+          npx cap add android
+          node scripts/patch-android.js ${{ github.run_number }}
+          npx cap sync android
+
+      - name: Compilar APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Assinar APK
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::Faltam os segredos da chave de assinatura (ANDROID_KEYSTORE_BASE64 etc.). Veja o README."
+            exit 1
+          fi
+          BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > corre-miguel.jks
+          "$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk alinhado.apk
+          "$BT/apksigner" sign --ks corre-miguel.jks \
+            --ks-pass env:ANDROID_KEYSTORE_PASSWORD \
+            --key-pass env:ANDROID_KEY_PASSWORD \
+            --ks-key-alias "$ANDROID_KEY_ALIAS" \
+            --out corre-miguel.apk alinhado.apk
+          "$BT/apksigner" verify corre-miguel.apk
+          rm corre-miguel.jks
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: corre-miguel-apk
+          path: corre-miguel.apk
+
+      - name: Publicar em Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.${{ github.run_number }}
+          name: Corre, Miguel! 0.1.${{ github.run_number }}
+          body: |
+            APK de teste do Corre, Miguel!
+            Baixe o `corre-miguel.apk` abaixo e abra no celular Android.
+            Se o Android perguntar, permita "instalar apps desconhecidos".
+          files: corre-miguel.apk
